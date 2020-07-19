@@ -1,0 +1,1 @@
+export const defaultTransactionTypeArr = ['personal', 'office'];
