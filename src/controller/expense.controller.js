@@ -10,6 +10,11 @@ import {
     NO_CONTENT
 } from "../constants/httpStatus";
 import { isDefined } from "../utils/validation";
+import {
+	MONGO_SORT_ASC,
+	MONGO_SORT_DESC,
+	sortOrderAscArr
+} from "../constants/mongo.js";
 
 let transactionTypeModel = new TransactionTypeModel();
 let expenseModel = new ExpenseModel();
@@ -45,14 +50,27 @@ export async function calcExpenses(req, res) {
     try {
         const queryParam = req.query;
         queryParam.user = req.user;
-	console.log(queryParam);
+
         // checking transaction type is present in request
         if (isDefined(queryParam.transactionType)) {
-            queryParam.transactionType = await transactionTypeModel.findOne({
-                userId: req.user,
-                type: queryParam.transactionType
-            });
+            if(queryParam.transactionType != 'all') {
+                queryParam.transactionType = await transactionTypeModel.findOne({
+                    userId: req.user,
+                    type: queryParam.transactionType
+                });
+            }
         }
+
+        // sorting of data
+        let sortOrder = MONGO_SORT_DESC;
+        if (isDefined(queryParam.sortOrder)) {
+            if (sortOrderAscArr.find(e => e == queryParam.sortOrder.toUpperCase())) {
+                sortOrder = MONGO_SORT_ASC;
+            }
+        }
+
+        //setting sortOrder in query Param
+        queryParam.sortOrder = sortOrder;
 
         // expense calculation call
         const calcExpense = await expenseModel.calcExpenses(queryParam);

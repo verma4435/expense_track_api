@@ -45,17 +45,16 @@ export default class ExpenseModel extends BaseModel {
 
             aggregateMatchParam.userId = queryParams.user._id;
 
-            if (isDefined(queryParams.date)) {
+            if (isDefined(queryParams.date) && isDefined(queryParams.isCumulative) && !Number(queryParams.isCumulative)) {
                 isDateQuery = true;
                 /** match with date */
                 const matchDate = mongoQueryDate(queryParams.date);
-                console.log(matchDate);
                 aggregateMatchParam.transactionDate = matchDate.mongoDateComparsionObj;
 
                 /** group by date */
                 aggregatGroupByParam._id.date = {
                     $dateToString: {
-                        format: "%Y-%m-%d %H:%M:%S",
+                        format: "%Y-%m-%d",
                         date: "$transactionDate",
                         timezone: "Asia/Kolkata"
                     }
@@ -64,7 +63,9 @@ export default class ExpenseModel extends BaseModel {
 
             /** match params for aggregate function */
             if (isDefined(queryParams.transactionType)) {
-                aggregateMatchParam.transactionType = queryParams.transactionType._id;
+                if(queryParams.transactionType != 'all') {
+                    aggregateMatchParam.transactionType = queryParams.transactionType._id;
+                }
                 isTransactionTypeQuery = true;
             }
 
@@ -126,6 +127,9 @@ export default class ExpenseModel extends BaseModel {
 
             /** project pipeline of aggregate */
             aggregateMainParam.push({ $project: aggregateProject })
+
+            /** sort pipeline of aggregate */
+            aggregateMainParam.push({ $sort: { date: queryParams.sortOrder} });
 
             return await this.aggregate(aggregateMainParam);
         } catch (err) {
