@@ -37,8 +37,10 @@ export default class ExpenseModel extends BaseModel {
             let isDateQuery = false;
             let isTransactionTypeQuery = false;
             let isLookUpQuery = false;
+            let	sortingField = 'totalAmount';
             const aggregateMainParam = [];
             const aggregateMatchParam = {};
+			const sortFieldObj = {};
             const aggregatGroupByParam = {};
             const aggregateProject = {};
             aggregatGroupByParam._id = {};
@@ -51,6 +53,7 @@ export default class ExpenseModel extends BaseModel {
                 const matchDate = mongoQueryDate(queryParams.date);
                 aggregateMatchParam.transactionDate = matchDate.mongoDateComparsionObj;
 
+				sortingField = 'date';
                 /** group by date */
                 aggregatGroupByParam._id.date = {
                     $dateToString: {
@@ -129,9 +132,9 @@ export default class ExpenseModel extends BaseModel {
             aggregateMainParam.push({ $project: aggregateProject })
 
             /** sort pipeline of aggregate */
-            aggregateMainParam.push({ $sort: { date: queryParams.sortOrder} });
-
-            return await this.aggregate(aggregateMainParam);
+			sortFieldObj[sortingField] = queryParams.sortOrder;
+            aggregateMainParam.push({ $sort: sortFieldObj });
+	    return await this.aggregate(aggregateMainParam);
         } catch (err) {
             throw err;
         }
